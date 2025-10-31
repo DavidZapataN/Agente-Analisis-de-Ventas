@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS ventas (
+  id INTEGER PRIMARY KEY,
+  vendedor TEXT NOT NULL,
+  sede TEXT NOT NULL,
+  producto TEXT NOT NULL,
+  cantidad INTEGER NOT NULL,
+  precio REAL NOT NULL,
+  fecha TEXT NOT NULL
+);

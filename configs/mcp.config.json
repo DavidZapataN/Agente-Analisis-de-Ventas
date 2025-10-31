@@ -1,0 +1,6 @@
+{
+  "sqlite": {
+    "command": "python",
+    "args": ["-m", "mcp_sqlite_server", "--db", "db/ventas.db"]
+  }
+}
