@@ -6,7 +6,7 @@ El LLM decide qué herramientas usar según la pregunta del usuario.
 
 import os
 import asyncio
-from typing import Optional, List, Callable, Any
+from typing import Optional
 from pathlib import Path
 
 from strands import Agent
