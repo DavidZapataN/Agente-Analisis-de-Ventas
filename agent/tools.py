@@ -10,7 +10,6 @@ from typing import Optional, Literal
 from pathlib import Path
 from strands import tool
 
-from agent.mcp_sql_client import run_sql
 from agent.db import init_db
 from agent.outputs import render_chart, save_file
 
