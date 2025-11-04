@@ -5,16 +5,19 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                          USUARIO                                 │
-│                  (Pregunta en lenguaje natural)                  │
+│           (Pregunta en lenguaje natural)                         │
+│                                                                  │
+│  Interfaz Web (Streamlit)  o  CLI (Terminal)                    │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       agent/app.py                               │
-│                   (Aplicación Principal)                         │
+│                    app_streamlit.py / agent/app.py               │
+│                     (Capa de Aplicación)                         │
 │                                                                  │
 │  • Recibe input del usuario                                      │
-│  • Mantiene el loop de interacción                               │
+│  • Mantiene historial de conversación                            │
+│  • Gestiona session state (Streamlit)                            │
 │  • Soporta modo legacy y modo inteligente                        │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -25,15 +28,16 @@
 │                                                                 │
 │  ┌───────────────────────────────────────────────────┐          │
 │  │   Strands Agent + Amazon Bedrock                  │          │
-│  │   (Amazon Lite)                                   │          │
+│  │   (Amazon Nova Lite)                              │          │
 │  │                                                   │          │
 │  │   • Razonamiento de lenguaje natural              │          │
+│  │   • System prompt con restricciones               │          │
 │  │   • Decisión de qué herramientas usar             │          │
 │  │   • Orquestación de acciones                      │          │
 │  │   • Generación de respuestas                      │          │
 │  └───────────────────────────────────────────────────┘          │
 │                             │                                   │
-│                             │ (invoca tools)                    │
+│                             │ (invoca tools con @tool)          │
 │                             ▼                                   │
 │  ┌───────────────────────────────────────────────────┐          │
 │  │              HERRAMIENTAS (Tools)                 │          │
@@ -43,6 +47,8 @@
 │  │  [2] generate_chart(sql, chart_type, title)       │          │
 │  │  [3] export_to_file(sql, format)                  │          │
 │  │  [4] get_database_schema()                        │          │
+│  │                                                    │          │
+│  │  Todas usan: sqlite3.connect() directamente       │          │
 │  └───────────────────────────────────────────────────┘          │
 └────────────────────────────┬────────────────────────────────────┘
                              │
@@ -51,32 +57,23 @@
 ┌──────────────────────┐              ┌──────────────────────┐
 │  DATOS & CONSULTAS   │              │   VISUALIZACIÓN Y    │
 │                      │              │     EXPORTACIÓN      │
-└──────────────────────┘              └──────────────────────┘
-         │                                       │
-         ▼                                       ▼
-┌──────────────────────┐              ┌──────────────────────┐
-│ agent/mcp_sql_client │              │   agent/outputs.py   │
+│   agent/db.py        │              │   agent/outputs.py   │
 │                      │              │                      │
-│ • Cliente MCP        │              │ • render_table()     │
-│ • Ejecuta SQL        │              │ • render_chart()     │
-│ • Valida seguridad   │              │ • save_file()        │
-└──────────┬───────────┘              └──────────────────────┘
-           │                                       │
-           ▼                                       ▼
+│ • init_db()          │              │ • render_table()     │
+│ • query()            │              │ • render_chart()     │
+│ • SQLite directo     │              │ • save_file()        │
+└──────────┬───────────┘              └──────────┬───────────┘
+           │                                     │
+           │ (sqlite3.connect)                   │ (matplotlib/pandas)
+           │                                     │
+           ▼                                     ▼
 ┌──────────────────────┐              ┌──────────────────────┐
-│  MCP Server (Node)   │              │  Matplotlib / Pandas │
-│  @executeautomation/ │              │                      │
-│  database-server     │              │  • Gráficos PNG      │
-│                      │              │  • CSV / Excel       │
-└──────────┬───────────┘              └──────────────────────┘
-           │
-           ▼
-┌──────────────────────┐
-│   SQLite Database    │
-│   db/ventas.db       │
-│                      │
-│ • Tabla: ventas      │
-│ • Datos de CSV       │
+│   SQLite Database    │              │  Archivos Generados  │
+│ data/ventas.sqlite   │              │                      │
+│                      │              │ • data/grafico_*.png │
+│ • Tabla: ventas      │              │ • data/salida_*.csv  │
+│ • Datos desde CSV    │              │ • exports/*.xlsx     │
+│ • Índices optimizados│              └──────────────────────┘
 └──────────────────────┘
 ```
 
@@ -117,20 +114,21 @@ await query_database(
     "GROUP BY producto ORDER BY total DESC LIMIT 5"
 )
   ↓
-# mcp_sql_client.py envía a MCP
-await run_sql(sql_query)
+# Conexión directa a SQLite (sin MCP)
+import sqlite3
+db_path = Path("data/ventas.sqlite")
+with sqlite3.connect(db_path) as conn:
+    df = pd.read_sql_query(sql_query, conn)
   ↓
-# MCP Server ejecuta en SQLite
-npx @executeautomation/database-server db/ventas.db
-  ↓
-# Retorna: [(producto, total), ...]
+# Retorna: DataFrame con los resultados
 ```
 
 ### 4. Generación de Respuesta
 
 ```python
-# Amazon Lite recibe los datos y genera respuesta natural
-"✅ Consulta ejecutada exitosamente. Resultados:
+# Amazon Nova Lite recibe los datos y genera respuesta natural
+"✅ Consulta ejecutada exitosamente. Aquí están los 5 productos más 
+vendidos en Medellín:
 
 producto     total
 ---------    -----
@@ -140,7 +138,9 @@ Teclado      95
 Monitor      80
 Webcam       65
 
-📊 Total de filas: 5"
+📊 Total de filas: 5
+
+El producto más vendido en Medellín es la Laptop con 150 unidades."
 ```
 
 ---
@@ -159,7 +159,7 @@ Webcam       65
 - `strands-agents`: Framework de orquestación
 - `boto3`: SDK de AWS
 - Amazon Bedrock: Servicio de IA
-- Amazon Lite: Modelo LLM
+- Amazon Nova Lite: Modelo LLM (ligero y económico)
 
 ---
 
@@ -191,21 +191,7 @@ Webcam       65
 
 ---
 
-### 3. **Cliente MCP** (`agent/mcp_sql_client.py`)
-
-**Responsabilidades:**
-- Comunicarse con el servidor MCP (Node.js)
-- Ejecutar consultas SQL a través del protocolo MCP
-- Normalizar resultados a formato Python
-
-**Protocolo:**
-```
-Python (asyncio) ←→ stdio ←→ Node.js MCP Server ←→ SQLite
-```
-
----
-
-### 4. **Base de Datos** (`agent/db.py`)
+### 3. **Base de Datos** (`agent/db.py`)
 
 **Responsabilidades:**
 - Inicializar SQLite desde CSV
@@ -226,9 +212,21 @@ CREATE TABLE ventas (
 );
 ```
 
+**Conexión:**
+```python
+import sqlite3
+from pathlib import Path
+
+DB_PATH = Path("data/ventas.sqlite")
+
+def query(sql: str, params: tuple = ()):
+    with sqlite3.connect(DB_PATH) as conn:
+        return pd.read_sql_query(sql, conn, params=params)
+```
+
 ---
 
-### 5. **Visualización** (`agent/outputs.py`)
+### 4. **Visualización** (`agent/outputs.py`)
 
 **Responsabilidades:**
 - Renderizar tablas en consola
@@ -341,23 +339,24 @@ Retornar al usuario
 | Librería | Propósito |
 |----------|-----------|
 | `strands-agents` | Framework de agentes |
-| `boto3` | SDK de AWS |
+| `boto3` | SDK de AWS para Bedrock |
 | `pandas` | Manipulación de datos |
-| `matplotlib` | Gráficos |
-| `mcp` | Protocolo MCP |
+| `matplotlib` | Generación de gráficos |
+| `sqlite3` | Base de datos (Python estándar) |
+| `streamlit` | Interfaz web interactiva |
 | `asyncio` | Programación asíncrona |
-| `sqlite3` | Base de datos |
 
 ---
 
 ## 🎯 Ventajas de esta Arquitectura
 
 ✅ **Modular**: Cada componente tiene responsabilidad única  
-✅ **Extensible**: Fácil agregar nuevas tools  
+✅ **Extensible**: Fácil agregar nuevas tools con decorador `@tool`  
 ✅ **Mantenible**: Separación clara de concerns  
 ✅ **Testeable**: Cada componente se puede probar aislado  
-✅ **Flexible**: Soporta múltiples modos de operación  
-✅ **Escalable**: MCP permite agregar más fuentes de datos  
+✅ **Flexible**: Soporta múltiples modos de operación (CLI y Web)  
+✅ **Simple**: SQLite directo sin dependencias externas complejas  
+✅ **Rápido**: Sin overhead de protocolos intermedios  
 
 ---
 
