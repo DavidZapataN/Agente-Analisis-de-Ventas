@@ -73,7 +73,7 @@ class SalesAnalysisAgent:
             system_prompt=self._get_system_prompt()
         )
     
-    #El promp del agente se define aca
+    # El prompt del agente se define acá
     def _get_system_prompt(self) -> str:
         """Define el comportamiento del agente"""
         return """Eres un asistente experto en análisis de ventas. Tu trabajo es ayudar a los usuarios 
