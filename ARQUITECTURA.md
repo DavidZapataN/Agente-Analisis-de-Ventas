@@ -47,8 +47,6 @@
 │  │  [2] generate_chart(sql, chart_type, title)       │          │
 │  │  [3] export_to_file(sql, format)                  │          │
 │  │  [4] get_database_schema()                        │          │
-│  │                                                    │          │
-│  │  Todas usan: sqlite3.connect() directamente       │          │
 │  └───────────────────────────────────────────────────┘          │
 └────────────────────────────┬────────────────────────────────────┘
                              │
