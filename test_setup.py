@@ -232,7 +232,7 @@ def main():
             response = input().strip().lower()
             if response in ('s', 'si', 'sí', 'y', 'yes'):
                 run_quick_test()
-        except:
+        except (EOFError, KeyboardInterrupt):
             pass
         
         print("\n✨ Para iniciar el agente, ejecuta:")
