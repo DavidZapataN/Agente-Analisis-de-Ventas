@@ -11,6 +11,36 @@ crea gráficos y exporta resultados, todo sin necesidad de código adicional.
 
 ---
 
+## ⚡ Inicio Rápido
+
+```bash
+# 1. Instalar dependencias del sistema
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip sqlite3
+
+# 2. Clonar y configurar
+git clone https://github.com/DavidZapataN/Agente-Analisis-de-ventas.git
+cd Agente-Analisis-de-Ventas
+
+# 3. Crear entorno virtual e instalar dependencias
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Configurar AWS Bedrock
+aws configure  # Ingresa tus credenciales de AWS
+
+# 5. Inicializar base de datos
+python db/init_db.py
+
+# 6. Ejecutar interfaz web (recomendado)
+streamlit run app_streamlit.py
+```
+
+**¡Listo!** La aplicación se abrirá en http://localhost:8501 🎉
+
+---
+
 ## 🎯 Características
 
 ✅ **Lenguaje natural**: Pregunta como lo harías a un analista humano  
@@ -66,11 +96,14 @@ y permisos para usar el modelo `amazon.nova-lite-v1:0`.
 ### 4. Inicializar la base de datos
 
 ```bash
+# Inicializar la base de datos desde el CSV
 python db/init_db.py
 
 # Verificar que se creó correctamente
-sqlite3 db/ventas.db "SELECT COUNT(*) FROM ventas;"
+sqlite3 data/ventas.sqlite "SELECT COUNT(*) FROM ventas;"
 ```
+
+**Nota**: La base de datos se crea automáticamente en `data/ventas.sqlite` a partir del archivo `data/ventas_demo.csv`.
 
 ---
 
