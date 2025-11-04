@@ -10,6 +10,16 @@ El agente interpreta preguntas en lenguaje natural, genera consultas SQL automá
 crea gráficos y exporta resultados, todo sin necesidad de código adicional.
 
 ---
+<img width="1839" height="879" alt="image" src="https://github.com/user-attachments/assets/42ff7dbc-3589-4619-8a10-fb7368a472bf" />
+
+
+<br/>
+
+## Imagen Generada
+<p align="center">
+  <img width="768" height="576" alt="image" src="https://github.com/user-attachments/assets/195c6cc6-22af-47ab-9a19-0c2d1283472f" />
+</p>
+
 
 ## ⚡ Inicio Rápido
 
