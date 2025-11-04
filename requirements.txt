@@ -1,5 +1,20 @@
+# Core dependencies
 pandas
-plotly
+matplotlib
+openpyxl
+
+# Strands AI framework
 strands-agents
 strands-agents-tools
+
+# AWS Bedrock
+boto3
+
+# MCP (Model Context Protocol)
 mcp
+
+# Web interface
+streamlit
+
+# Async utilities
+asyncio
